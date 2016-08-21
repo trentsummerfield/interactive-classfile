@@ -1,5 +1,22 @@
 <html>
 <body>
 Hello World
+<br>
+{{if .Err }}
+{{ .Err.Error }}
+{{else}}
+<div id="source">
+	<pre>
+		{{ .JavaSource }}
+	</pre>
+</div>
+<div id="bytes">
+	{{range $index, $byte := .ClassFileBytes}}
+	<span id="byte_{{ $index }}">
+		{{ $byte }}
+	</span>
+	{{end}}
+</div>
+{{end}}
 </body>
 </html>
