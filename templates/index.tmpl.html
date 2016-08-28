@@ -1,22 +1,118 @@
 <html>
+<head>
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.3.2/themes/default/style.min.css">
+<style>
+.jstree-anchor {
+	font-family: "refrigerator-deluxe", sans-serif;
+}
+.hex {
+	font-family: 'Share Tech Mono', monospace;
+	padding: 0.2em;
+	magin: 0.1em;
+}
+.selected {
+	background-color: lightcyan;
+}
+.hovered {
+	background-color: lightblue;
+	font-weight: bolder;
+	font-style: italic;
+}
+</style>
+</head>
 <body>
-Hello World
-<br>
-{{if .Err }}
-{{ .Err.Error }}
-{{else}}
-<div id="source">
-	<pre>
-		{{ .JavaSource }}
-	</pre>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.3.2/jstree.min.js"></script>
+
+<div id="class">
+	<div class="col-md-6 panel panel-default">
+		<div class="panel-heading">Class File Bytes</div>
+		<div id="raw" class="panel-body">
+		</div> 
+	</div> 
+	<div class="col-md-6 panel panel-default">
+		<div class="panel-heading">Parsed Class File</div>
+		<div id="parsed" class="panel-body">
+			<div id="tree"></div>
+		</div>
+	</div>
 </div>
-<div id="bytes">
-	{{range $index, $byte := .ClassFileBytes}}
-	<span id="byte_{{ $index }}">
-		{{ $byte }}
-	</span>
-	{{end}}
-</div>
-{{end}}
+<script>
+sections = []
+
+function setBytes(byteArray) {
+	bytes = $('#raw');
+	for (i = 0; i < byteArray.length; i++) {
+		byte = $(document.createElement('span'));
+		byte.appendTo(bytes);
+		byte.attr('id', 'byte_' + i);
+		byte.css('word-wrap', 'break-word');
+		byte.addClass('hex');
+		byte.text(byteArray[i]);
+	}
+}
+
+function setSections(node) {
+	sections[node.id] = node;
+	if ('children' in node) {
+		node.children.forEach(function(child) {
+			setSections(child)
+		});
+	}
+}
+
+$tree = $('#tree');
+
+$.getJSON(
+	'/class',
+	function(data) {
+		setBytes(data.raw);
+		data.parsed.forEach(function(node) {
+			setSections(node);
+		});
+		$tree.jstree({'core': {
+				'data': data.parsed
+			}
+		});
+	}
+);
+
+$tree.bind(
+    'select_node.jstree',
+    function(event, data) {
+		$('#raw').children().removeClass("selected")
+		var node = data.node;
+		node = sections[~~node.id]
+		for (i = node.StartIndex; i < node.EndIndex; i++) {
+			$('#byte_' + i).addClass("selected");
+		}
+    }
+);
+
+$tree.bind(
+    'hover_node.jstree',
+    function(event, data) {
+		var node = data.node;
+		node = sections[~~node.id]
+		for (i = node.StartIndex; i < node.EndIndex; i++) {
+			$('#byte_' + i).addClass("hovered");
+		}
+    }
+);
+
+$tree.bind(
+    'dehover_node.jstree',
+    function(event, data) {
+		var node = data.node;
+		node = sections[~~node.id]
+		for (i = node.StartIndex; i < node.EndIndex; i++) {
+			$('#byte_' + i).removeClass("hovered");
+		}
+    }
+);
+</script>
 </body>
 </html>

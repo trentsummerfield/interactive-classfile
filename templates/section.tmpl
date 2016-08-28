@@ -1,0 +1,13 @@
+{{range $index, $section := .}}
+	<span id="section_{{ $index }}" class="section">
+	<span class="section-start">{{$section.StartIndex}}</span>
+	...
+	<span class="section-end">{{$section.EndIndex}}</span>
+	<br/>
+	<span class="section-description">{{$section.Description}}</span>
+	<br/>
+	{{if $section.Subsections }}
+		{{template "section.tmpl" $section.Subsections}}
+	{{end}}
+</span>
+{{end}}
